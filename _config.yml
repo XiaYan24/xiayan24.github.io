@@ -64,7 +64,7 @@ netease_comment: false
 
 # Sidebar settings
 sidebar: true                           # whether or not using Sidebar.
-sidebar-about-description: "不求与人相比，<br>但求问心无愧。"
+sidebar-about-description: "不求与人相比，<br>但求问心无愧 "
 sidebar-avatar: /img/avatar-hux-ny.jpg      # use absolute URL, seeing it's used in both `/` and `/about/`
 
 
@@ -103,14 +103,5 @@ friends: [
     },{
         title: "Luke 的自留地",
         href: "http://hmqk1995.github.io"
-    },{
-        title: "David's Game",
-        href: "https://www.ruoyaowu.com/"
-    },{
-        title: "DHong Say",
-        href: "http://dhong.co"
-    },{
-        title: "尹峰以为",
-        href: "http://ingf.github.io/"
     }
 ]
