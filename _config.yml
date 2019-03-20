@@ -2,10 +2,10 @@
 title: Xia焱 Blog
 SEOTitle: Xia焱的博客 | XiaYan Blog
 header-img: img/home-bg.jpg
-email: xiahaotianV@163.com
+email: huxpro@gmail.com
 description: "关于程序与设计"
 keyword: "Xia_焱,博客, 个人网站, 互联网, Android,Kotlin,JavaEE"
-url: "https://blog.csdn.net/MacaoPark"   # your host, for absolute URL
+url: "https://blog.csdn.net/MacaoPark"              # your host, for absolute URL
 baseurl: ""                             # for example, '/blog' if your blog hosted on 'host/blog'
 
 # Publish posts or collection documents with a future date.
@@ -59,7 +59,7 @@ kramdown:
 
 
 # Disqus settings
-disqus_username: XiaYan
+disqus_username: hux
 
 # Netease settings
 netease_comment: false
@@ -69,6 +69,11 @@ netease_comment: false
 # Analytics settings
 # Baidu Analytics 
 # ba_track_id: [your track id]
+
+# Google Analytics
+ga_track_id: 'UA-49627206-1'            # Format: UA-xxxxxx-xx
+ga_domain: huangxuan.me
+
 
 
 # Sidebar settings
@@ -98,7 +103,9 @@ page-mathjax: false
 # Friends
 friends: [
     {
- 
+    #     title: "Su",
+    #     href: "http://su.gallery/"
+    # },{
         title: "乱序",
         href: "http://mida.re/"
     },{
