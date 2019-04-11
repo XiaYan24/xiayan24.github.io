@@ -5,9 +5,344 @@
     <description>关于程序与设计</description>
     <link>http://localhost:4000/</link>
     <atom:link href="http://localhost:4000/feed.xml" rel="self" type="application/rss+xml" />
-    <pubDate>Mon, 25 Mar 2019 14:22:14 +0800</pubDate>
-    <lastBuildDate>Mon, 25 Mar 2019 14:22:14 +0800</lastBuildDate>
+    <pubDate>Fri, 12 Apr 2019 00:04:10 +0800</pubDate>
+    <lastBuildDate>Fri, 12 Apr 2019 00:04:10 +0800</lastBuildDate>
     <generator>Jekyll v3.8.5</generator>
+    
+      <item>
+        <title>直接调用阿里云视频点播API实现视频播放</title>
+        <description>&lt;blockquote&gt;
+  &lt;p&gt;“每天进步一点点！”&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&quot;前言&quot;&gt;前言&lt;/h2&gt;
+
+&lt;p&gt;17年的时候公司让我要实现一个视频播放的功能，正常是不需要移动端调用阿里云视频API的，这件事是由后台来完成的。但是公司那会后台没时间我就给实现了。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;#build&quot;&gt;跳过废话，直接看技术实现 &lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;后来经过了半年左右CSDN的这篇博客被查阅的次数超过了6000次我觉得有必要重新整理一下了，梳理一下，以便帮助需要的人。&lt;/p&gt;
+
+&lt;p id=&quot;build&quot;&gt;&lt;/p&gt;
+&lt;hr /&gt;
+
+&lt;h2 id=&quot;正文&quot;&gt;正文&lt;/h2&gt;
+
+&lt;p&gt;先来看一眼官方的&lt;a href=&quot;https://help.aliyun.com/document_detail/44435.html?spm=5176.product29932.6.618.DUYkdb&quot;&gt;API调用文档&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;有人会说了你直接扔出个阿里云的API你这不是搞笑吗？少侠勿急，且听我细细道来。&lt;/p&gt;
+
+&lt;p&gt;【调用流程】
+	想使用阿里云GET请求需要你一些参数，我这里以获取阿里云获取视频列表的接口为例&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;http://vod.cn-shanghai.aliyuncs.com/?Action=GetVideoList&amp;amp;Status=Normal&amp;amp;Format=JSON&amp;amp;&amp;lt;公共参数&amp;gt;&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/xy_ali.png&quot; alt=&quot;img&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;公共参数要数 签名结果串最难搞定的，重点要说这个。&lt;/p&gt;
+
+&lt;h2 id=&quot;签名的配置及其步骤&quot;&gt;签名的配置及其步骤&lt;/h2&gt;
+
+&lt;p&gt;【0】 我把一些参数都暴露，让大家看的更清晰，当然AccessSecret   AccessKey 都是不对的但是字符位数相同&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;private String WJ_Home_AccessKey = &quot;LTAIPuR8IfTyWIan&quot;;
+private String WJ_Home_AccessSecret = &quot;PW0mx2aGuhGhYHj7qeXtisQ9Skjbvq&quot;;
+private String playKey = &quot;ex491ux1dof8qnpu2n99k88n9uphb4kyr4wgq62ws1dawxcnusthjgfob935838t&quot;;
+private static final String ISO8601_DATE_FORMAT = &quot;yyyy-MM-dd'T'HH:mm:ss'Z'&quot;;
+private String CateId = &quot;274011476&quot;; //这个是视频分类ID，可以填默认-1
+final String HTTP_METHOD = &quot;GET&quot;;
+final String SEPARATOR = &quot;&amp;amp;&quot;;
+final String EQUAL = &quot;=&quot;;
+private static final String ENCODE_TYPE = &quot;UTF-8&quot;;
+private String Timestamp = formatIso8601Date(new Date());
+private String SignatureNonce = UUID.randomUUID().toString();
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【1】生成签名的过程&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;Map&amp;lt;String, String&amp;gt; parameterMapX = new HashMap&amp;lt;String, String&amp;gt;();
+//=============7大公共参数========================
+parameterMapX.put(&quot;Format&quot;, &quot;JSON&quot;);
+parameterMapX.put(&quot;Version&quot;, &quot;2017-03-21&quot;);
+parameterMapX.put(&quot;SignatureMethod&quot;, &quot;HMAC-SHA1&quot;);
+parameterMapX.put(&quot;SignatureVersion&quot;, &quot;1.0&quot;);
+parameterMapX.put(&quot;AccessKeyId&quot;, WJ_Home_AccessKey);
+parameterMapX.put(&quot;Timestamp&quot;, Timestamp);
+parameterMapX.put(&quot;SignatureNonce&quot;, SignatureNonce);
+//=============分割线下的是特有参数===============
+parameterMapX.put(&quot;Action&quot;, &quot;GetVideoList&quot;);
+parameterMapX.put(&quot;PageNo&quot;, &quot;1&quot;);
+parameterMapX.put(&quot;PageSize&quot;, &quot;10&quot;);
+parameterMapX.put(&quot;CateId&quot;, CateId);
+List&amp;lt;String&amp;gt; sortedKeys = new ArrayList&amp;lt;String&amp;gt;(parameterMapX.keySet());
+Collections.sort(sortedKeys);
+//开始生成签名
+String PuR8IfTyWIan = GoToSign(sortedKeys, parameterMapX);
+//网络请求 请求视频列表
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【3-1】计算ISO8601时间方法&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;``` 
+private static String formatIso8601Date(Date date) {
+    SimpleDateFormat df = new SimpleDateFormat(ISO8601_DATE_FORMAT);
+    df.setTimeZone(new SimpleTimeZone(0, &quot;GMT&quot;));
+    return df.format(date);
+}
+
+``` 
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【3-2】转码工具类&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;	``` 
+private static String percentEncode(String value) {
+    if (value == null) return null;
+    try {
+        return URLEncoder.encode(value, ENCODE_TYPE).replace(&quot;+&quot;, &quot;%20&quot;).replace(&quot;*&quot;, &quot;%2A&quot;).replace(&quot;%7E&quot;, &quot;~&quot;);
+    } catch (UnsupportedEncodingException e) {
+        e.printStackTrace();
+    }
+    return value;
+}
+
+
+``` 
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【3-3】hmac_sha1算法&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;	``` 
+private String hmac_sha1(String key, String datas) {
+    String reString = &quot;&quot;;
+
+    try {
+        byte[] data = key.getBytes(&quot;UTF-8&quot;);
+        //根据给定的字节数组构造一个密钥,第二参数指定一个密钥算法的名称
+        SecretKey secretKey = new SecretKeySpec(data, &quot;HmacSHA1&quot;);
+        //生成一个指定 Mac 算法 的 Mac 对象
+        Mac mac = Mac.getInstance(&quot;HmacSHA1&quot;);
+        //用给定密钥初始化 Mac 对象
+        mac.init(secretKey);
+
+        byte[] text = datas.getBytes(&quot;UTF-8&quot;);
+        //完成 Mac 操作
+        byte[] text1 = mac.doFinal(text);
+
+        reString = Base64.encodeToString(text1, Base64.DEFAULT);
+
+    } catch (Exception e) {
+        // TODO: handle exception
+    }
+
+    return reString;
+}
+
+``` 
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【3-4】签名方法   这里我把获取签名封装成了一个方法，更方便大家的使用&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;	``` 
+private String GoToSign(List&amp;lt;String&amp;gt; sortedKeys, Map&amp;lt;String, String&amp;gt; parameterMap) {
+    StringBuilder stringToSign = new StringBuilder();
+    stringToSign.append(HTTP_METHOD).append(SEPARATOR);
+    stringToSign.append(percentEncode(&quot;/&quot;)).append(SEPARATOR);
+    StringBuilder QueryString = new StringBuilder();
+    for (String key : sortedKeys) {
+        // 此处需要对key和value进行编码
+        String value = parameterMap.get(key);
+        QueryString.append(SEPARATOR).append(percentEncode(key)).append(EQUAL).append(percentEncode(value));
+		  //  append的拼接样式 请看 【4-1】
+    }
+    StringBuilder append = stringToSign.append(percentEncode(QueryString.toString().substring(1)));
+    String PuR8IfTyWIan = hmac_sha1(WJ_Home_AccessSecret + &quot;&amp;amp;&quot;, append.toString()).trim();
+	  //  PuR8IfTyWIan 样式 请看 【4-2】
+    return PuR8IfTyWIan;
+}
+
+
+``` 
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【4-1】append 的拼接样式&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;GET&amp;amp;%2F&amp;amp;AccessKeyId%3DLTAIPuR8IfTyWIan%26Action%3DGetVideoPlayAuth%26Format%3DJSON%26SignatureMethod%3DHMAC-SHA1%26SignatureNonce%3D578a50c1-280d-4a34-bffc-e0sda6b2df76%26SignatureVersion%3D1.0%26Timestamp%3D2017-08-11T08%253A56%253A39Z%26Version%3D2017-03-21%26VideoId%3D86d0a02dfccc46bab045d954e6b70036&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;【4-2】PuR8IfTyWIan的样式&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;9or7epLWdsgMIvtRlJZm57HpBGs=&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;最后我强调一点 就是拼接URL这一点（我在拼接的时候没有进行转码，也能请求成功！）&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;我的URL
+   &lt;code class=&quot;highlighter-rouge&quot;&gt;http://vod.cn-shanghai.aliyuncs.com?Signature=7K0h2pa/JS4KdC6XEKiYrw7a3EU=&amp;amp;SignatureNonce=bb8d6d93-e56c-4e76-b7d8-f4be3490b7e6&amp;amp;Format=JSON&amp;amp;CateId=133999353&amp;amp;SignatureMethod=HMAC-SHA1&amp;amp;Timestamp=2017-08-13T13%3A15%3A22Z&amp;amp;SignatureVersion=1.0&amp;amp;Action=GetVideoList&amp;amp;Version=2017-03-21&amp;amp;PageNo=1&amp;amp;PageSize=10&amp;amp;AccessKeyId=LTAIPuR8IfTyWIan&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;阿里云的URL
+   &lt;code class=&quot;highlighter-rouge&quot;&gt;http://vod.cn-shanghai.aliyuncs.com?Signature=UI%2FwKfuvTtphzCKHwPhP0ErtLnc%3D&amp;amp;SignatureVersion=1.0&amp;amp;Action=GetVideoPlayAuth&amp;amp;Format=JSON&amp;amp;VideoId=68a4d2629a339db3207963ac073a88cd&amp;amp;SignatureNonce=578a50c1-280d-4a34-bffc-e06aa6b2df76&amp;amp;Version=2017-03-21&amp;amp;AccessKeyId=testId&amp;amp;SignatureMethod=HMAC-SHA1&amp;amp;Timestamp=2017-03-29T12%3A09%3A11Z&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;有人就会说了为什么你不跟着阿里爸爸方法走呢？ 我也想跟着阿里爸爸走啊，条件不允许啊！
+经过hmac_sha1我的转码后的签名&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt; `UI%2QcKDaeGtplzCJHwPhP0ErtLnc%3DOA`
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;阿里云的转码后的签名&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt; `UI%2FwKfuvTtphzCKHwPhP0ErtLnc%3D`
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;为什么没有跟阿里爸爸的方法走，是因为我转码过后就多出个0A,如果按照阿里云的调用方式最后等待我的结果只有 &lt;strong&gt;SignatureDoesNotMatch&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;阿里API给的方法是这样的&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt;	``` 
+ // 生成请求URL
+	StringBuilder requestURL;
+	requestURL = new StringBuilder(&quot;http://vod.cn-shanghai.aliyuncs.com?&quot;);
+	requestURL.append(URLEncoder.encode(&quot;Signature&quot;, ENCODE_TYPE)).append(&quot;=&quot;).append(signature);
+	for (Map.Entry&amp;lt;String, String&amp;gt; e : parameterMap.entrySet()) {
+	requestURL.append(&quot;&amp;amp;&quot;).append(percentEncode(e.getKey())).append(&quot;=&quot;).append(percentEncode(e.getValue()));
+
+
+``` 
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;因为它把集合中的数据进行了转码，当生成了URL，你对这个url进行请求的时候&lt;strong&gt;InvalidTimeStamp.Format时间戳格式不对&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;【解决办法】&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;table class=&quot;rouge-table&quot;&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td class=&quot;rouge-gutter gl&quot;&gt;&lt;pre class=&quot;lineno&quot;&gt;1
+&lt;/pre&gt;&lt;/td&gt;&lt;td class=&quot;rouge-code&quot;&gt;&lt;pre&gt; `requestURL.append(&quot;&amp;amp;&quot;).append(e.getKey()).append(&quot;=&quot;).append(e.getValue());`
+&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;【网络请求】 我这里用的是nohttp  参数都放上就OK了&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/img/in-post/xy_ali_q.png&quot; alt=&quot;img&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;希望这篇博客可以帮助到你&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 12 Apr 2019 06:46:00 +0800</pubDate>
+        <link>http://localhost:4000/2019/04/12/%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8C%E4%BA%91%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%ADAPI%E5%AE%9E%E7%8E%B0%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE-2019/</link>
+        <guid isPermaLink="true">http://localhost:4000/2019/04/12/%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8C%E4%BA%91%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%ADAPI%E5%AE%9E%E7%8E%B0%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE-2019/</guid>
+        
+        <category>视频</category>
+        
+        <category>Android</category>
+        
+        
+      </item>
     
       <item>
         <title>Hello 2019</title>
