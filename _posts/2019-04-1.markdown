@@ -31,7 +31,7 @@ tags:
 ## 正文
 
 
-先来看一眼官方的[API调用文档](https://help.aliyun.com/document_detail/44435.html?spm=5176.product29932.6.618.DUYkdb)
+先来看一眼官方的[API调用文档](//help.aliyun.com/document_detail/44435.html?spm=5176.product29932.6.618.DUYkdb)
 
 
 有人会说了你直接扔出个阿里云的API你这不是搞笑吗？少侠勿急，且听我细细道来。

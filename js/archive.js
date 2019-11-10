@@ -1,6 +1,6 @@
 /*
 Credits: this script is shamelessly borrowed from
-https://github.com/kitian616/jekyll-TeXt-theme
+//github.com/kitian616/jekyll-TeXt-theme
 */
 (function() {
   function queryString() {

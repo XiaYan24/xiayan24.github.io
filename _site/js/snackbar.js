@@ -2,7 +2,7 @@
  * SnackBar.js
  * 
  * This small component is borrowed from 
- * https://codepen.io/wibblymat/pen/avAjq
+ * //codepen.io/wibblymat/pen/avAjq
  */
 
 
