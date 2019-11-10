@@ -53,7 +53,7 @@ const getCacheBustingUrl = (req) => {
   // Github Pages served with Cache-Control: max-age=600
   // max-age on mutable content is error-prone, with SW life of bugs can even extend.
   // Until cache mode of Fetch API landed, we have to workaround cache-busting with query string.
-  // Cache-Control-Bug: //bugs.chromium.org/p/chromium/issues/detail?id=453190
+  // Cache-Control-Bug: https://bugs.chromium.org/p/chromium/issues/detail?id=453190
   url.search += (url.search ? '&' : '?') + 'cache-bust=' + now;
   return url.href
 }
@@ -65,7 +65,7 @@ const getCacheBustingUrl = (req) => {
 const isNavigationReq = (req) => (req.mode === 'navigate' || (req.method === 'GET' && req.headers.get('accept').includes('text/html')))
 
 // The Util Function to detect if a req is end with extension
-// Accordin to Fetch API spec <//fetch.spec.whatwg.org/#concept-request-destination>
+// Accordin to Fetch API spec <https://fetch.spec.whatwg.org/#concept-request-destination>
 // Any HTML's navigation has consistently mode="navigate" type="" and destination="document"
 // including requesting an img (or any static resources) from URL Bar directly.
 // So It ends up with that regExp is still the king of URL routing ;)
@@ -78,7 +78,7 @@ const endWithExtension = (req) => Boolean(new URL(req.url).pathname.match(/\.\w+
 //    .ext?blah -> !(sw 302 -> .ext/?blah -> gh 404) -> .ext?blah
 // If It's a navigation req and it's url.pathname isn't end with '/' or '.ext'
 // it should be a dir/repo request and need to be fixed (a.k.a be redirected)
-// Tracking //twitter.com/Huxpro/status/798816417097224193
+// Tracking https://twitter.com/Huxpro/status/798816417097224193
 const shouldRedirect = (req) => (isNavigationReq(req) && new URL(req.url).pathname.substr(-1) !== "/" && !endWithExtension(req))
 
 // The Util Function to get redirect URL
@@ -183,8 +183,8 @@ self.addEventListener('fetch', event => {
     }
 
     // Stale-while-revalidate for possiblily dynamic content
-    // similar to HTTP's stale-while-revalidate: //www.mnot.net/blog/2007/12/12/stale
-    // Upgrade from Jake's to Surma's: //gist.github.com/surma/eb441223daaedf880801ad80006389f1
+    // similar to HTTP's stale-while-revalidate: https://www.mnot.net/blog/2007/12/12/stale
+    // Upgrade from Jake's to Surma's: https://gist.github.com/surma/eb441223daaedf880801ad80006389f1
     const cached = caches.match(event.request);
     const fetched = fetch(getCacheBustingUrl(event.request), { cache: "no-store" });
     const fetchedCopy = fetched.then(resp => resp.clone());
@@ -235,8 +235,8 @@ function sendMessageToAllClients(msg) {
  */
 function sendMessageToClientsAsync(msg) {
   // waiting for new client alive with "async" setTimeout hacking
-  // //twitter.com/Huxpro/status/799265578443751424
-  // //jakearchibald.com/2016/service-worker-meeting-notes/#fetch-event-clients
+  // https://twitter.com/Huxpro/status/799265578443751424
+  // https://jakearchibald.com/2016/service-worker-meeting-notes/#fetch-event-clients
   setTimeout(() => {
     sendMessageToAllClients(msg)
   }, 1000)
