@@ -10,9 +10,9 @@
     <meta name="keyword"  content="Xia_焱,博客, 个人网站, 互联网, Android,Kotlin,JavaEE">
     <link rel="shortcut icon" href="/img/favicon.ico">
 
-    <title>直接调用阿里云视频点播API实现视频播放 - Xia焱的博客 | XiaYan Blog</title>
+    <title>Android 使用RecycleView自定义日历签到效果 - Xia焱的博客 | XiaYan Blog</title>
 
-    <link rel="canonical" href="http://localhost:4000/2019/04/12/%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8C%E4%BA%91%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%ADAPI%E5%AE%9E%E7%8E%B0%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE-2019/">
+    <link rel="canonical" href="http://localhost:4000/2019/10/11/sign/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -164,7 +164,7 @@
 
     <!-- Image to hack wechat -->
 <!-- <img src="/img/icon_wechat.png" width="0" height="0"> -->
-<!-- <img src="/img/post-bg-ali.jpg" width="0" height="0"> -->
+<!-- <img src="/img/in-post/icon_sign_bg.jpg" width="0" height="0"> -->
 
 <!-- Post Header -->
 
@@ -173,7 +173,7 @@
 <style type="text/css">
     header.intro-header{
         position: relative;
-        background-image: url('/img/post-bg-ali.jpg');
+        background-image: url('/img/in-post/icon_sign_bg.jpg');
         background: ;
     }
 
@@ -190,15 +190,15 @@
                 <div class="post-heading">
                     <div class="tags">
                         
-                        <a class="tag" href="/archive/?tag=%E8%A7%86%E9%A2%91" title="视频">视频</a>
+                        <a class="tag" href="/archive/?tag=%E8%87%AA%E5%AE%9A%E4%B9%89" title="自定义">自定义</a>
                         
                         <a class="tag" href="/archive/?tag=Android" title="Android">Android</a>
                         
                     </div>
-                    <h1>直接调用阿里云视频点播API实现视频播放</h1>
+                    <h1>Android 使用RecycleView自定义日历签到效果</h1>
                     
-                    <h2 class="subheading"> "重新完善了一下在我CSDN中的这篇博客，梳理思路使大家更快的上手"</h2>
-                    <span class="meta">Posted by XiaYan on April 12, 2019</span>
+                    <h2 class="subheading"></h2>
+                    <span class="meta">Posted by XiaYan on October 11, 2019</span>
                 </div>
             </div>
         </div>
@@ -225,156 +225,32 @@
                 
 
 				<blockquote>
-  <p>“每天进步一点点！”</p>
+  <p>“每天进步一点点！ ”</p>
 </blockquote>
 
 <h2 id="前言">前言</h2>
 
-<p>17年的时候公司让我要实现一个视频播放的功能，正常是不需要移动端调用阿里云视频API的，这件事是由后台来完成的。但是公司那会后台没时间我就给实现了。</p>
+<p>最近公司又要求做一个签到日历效果，我为啥加个又是之前我实现了一个日历签到效果，而这次我使用的则是RecycleView去实现。</p>
 
 <p><a href="#build">跳过废话，直接看技术实现 </a></p>
 
-<p>后来经过了半年左右CSDN的这篇博客被查阅的次数超过了6000次我觉得有必要重新整理一下了，梳理一下，以便帮助需要的人。</p>
+<p>公司最近要求弄个签到的送积分的东西，我在18年年末的时候曾经写了一个，然后因为没有产品加上UI的一些“想法”我之前实现的那个签到日历无法满足，他这个定制化的需求，最要命的是需求总变。</p>
 
 <p id="build"></p>
 <hr />
 
-<h2 id="正文">正文</h2>
+<h2 id="效果图">效果图</h2>
 
-<p>先来看一眼官方的<a href="https://help.aliyun.com/document_detail/44435.html?spm=5176.product29932.6.618.DUYkdb">API调用文档</a></p>
+<p><img src="/img/in-post/icon_zs.gif" alt="img" /></p>
 
-<p>有人会说了你直接扔出个阿里云的API你这不是搞笑吗？少侠勿急，且听我细细道来。</p>
+<h2 id="实现思路">实现思路</h2>
 
-<p>【调用流程】
-	想使用阿里云GET请求需要你一些参数，我这里以获取阿里云获取视频列表的接口为例</p>
+<p>初始化日历数据，把数据传入到适配器中并显示。
+至于左右滑动页面刷新，重写RecyclerView的onTouchEvent方法，监听手势的改变，然后更改list数据，重新显示UI。</p>
 
-<p><code class="highlighter-rouge">http://vod.cn-shanghai.aliyuncs.com/?Action=GetVideoList&amp;Status=Normal&amp;Format=JSON&amp;&lt;公共参数&gt;</code></p>
+<h2 id="核心代码">核心代码</h2>
 
-<p><img src="/img/in-post/xy_ali.png" alt="img" /></p>
-
-<p>公共参数要数 签名结果串最难搞定的，重点要说这个。</p>
-
-<h2 id="签名的配置及其步骤">签名的配置及其步骤</h2>
-
-<p>【0】 我把一些参数都暴露，让大家看的更清晰，当然AccessSecret   AccessKey 都是不对的但是字符位数相同</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-</pre></td><td class="rouge-code"><pre>private String WJ_Home_AccessKey = "LTAIPuR8IfTyWIan";
-private String WJ_Home_AccessSecret = "PW0mx2aGuhGhYHj7qeXtisQ9Skjbvq";
-private String playKey = "ex491ux1dof8qnpu2n99k88n9uphb4kyr4wgq62ws1dawxcnusthjgfob935838t";
-private static final String ISO8601_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
-private String CateId = "274011476"; //这个是视频分类ID，可以填默认-1
-final String HTTP_METHOD = "GET";
-final String SEPARATOR = "&amp;";
-final String EQUAL = "=";
-private static final String ENCODE_TYPE = "UTF-8";
-private String Timestamp = formatIso8601Date(new Date());
-private String SignatureNonce = UUID.randomUUID().toString();
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>【1】生成签名的过程</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-</pre></td><td class="rouge-code"><pre>Map&lt;String, String&gt; parameterMapX = new HashMap&lt;String, String&gt;();
-//=============7大公共参数========================
-parameterMapX.put("Format", "JSON");
-parameterMapX.put("Version", "2017-03-21");
-parameterMapX.put("SignatureMethod", "HMAC-SHA1");
-parameterMapX.put("SignatureVersion", "1.0");
-parameterMapX.put("AccessKeyId", WJ_Home_AccessKey);
-parameterMapX.put("Timestamp", Timestamp);
-parameterMapX.put("SignatureNonce", SignatureNonce);
-//=============分割线下的是特有参数===============
-parameterMapX.put("Action", "GetVideoList");
-parameterMapX.put("PageNo", "1");
-parameterMapX.put("PageSize", "10");
-parameterMapX.put("CateId", CateId);
-List&lt;String&gt; sortedKeys = new ArrayList&lt;String&gt;(parameterMapX.keySet());
-Collections.sort(sortedKeys);
-//开始生成签名
-String PuR8IfTyWIan = GoToSign(sortedKeys, parameterMapX);
-//网络请求 请求视频列表
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>【3-1】计算ISO8601时间方法</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-</pre></td><td class="rouge-code"><pre>``` 
-private static String formatIso8601Date(Date date) {
-    SimpleDateFormat df = new SimpleDateFormat(ISO8601_DATE_FORMAT);
-    df.setTimeZone(new SimpleTimeZone(0, "GMT"));
-    return df.format(date);
-}
-
-``` 
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>【3-2】转码工具类</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-</pre></td><td class="rouge-code"><pre>	``` 
-private static String percentEncode(String value) {
-    if (value == null) return null;
-    try {
-        return URLEncoder.encode(value, ENCODE_TYPE).replace("+", "%20").replace("*", "%2A").replace("%7E", "~");
-    } catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-    }
-    return value;
-}
-
-
-``` 
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>【3-3】hmac_sha1算法</p>
+<p>CalendarTool 这个工具类确实不错，可以获取正确的日期，很棒的算法可以减少大家不必要的时间。</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
@@ -403,36 +279,528 @@ private static String percentEncode(String value) {
 25
 26
 27
-</pre></td><td class="rouge-code"><pre>	``` 
-private String hmac_sha1(String key, String datas) {
-    String reString = "";
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+</pre></td><td class="rouge-code"><pre>``` 
+public class CalendarTool&lt;T extends BaseDateEntity&gt; {
 
-    try {
-        byte[] data = key.getBytes("UTF-8");
-        //根据给定的字节数组构造一个密钥,第二参数指定一个密钥算法的名称
-        SecretKey secretKey = new SecretKeySpec(data, "HmacSHA1");
-        //生成一个指定 Mac 算法 的 Mac 对象
-        Mac mac = Mac.getInstance("HmacSHA1");
-        //用给定密钥初始化 Mac 对象
-        mac.init(secretKey);
+private final String TAG = CalendarTool.class.getSimpleName();
 
-        byte[] text = datas.getBytes("UTF-8");
-        //完成 Mac 操作
-        byte[] text1 = mac.doFinal(text);
+public static int FLING_MIN_DISTANCE = 100;
 
-        reString = Base64.encodeToString(text1, Base64.DEFAULT);
+private final int[] weekDayRow = {0, 1, 2, 3, 4, 5, 6};
 
-    } catch (Exception e) {
-        // TODO: handle exception
-    }
+private ArrayList&lt;DateEntity&gt; mDataList = new ArrayList&lt;&gt;();//日期数组
+private ArrayList&lt;T&gt; mRecordList;//事件记录数组
+private DateEntity   mDateEntity;
+private int          mYear;
+private int          mMonth;
 
-    return reString;
+private boolean mEndBelong;
+private boolean mStartBelong;
+private int     mStartDay;
+private int     mEndDay;
+
+/**
+ * 当前年月日
+ */
+private int mCurrenYear;
+private int mCurrenMonth;
+private int mCurrenDay;
+
+/**
+ * 平年月天数数组
+ */
+int commonYearMonthDay[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+/**
+ * 闰年月天数数组
+ */
+int leapYearMonthDay[]   = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+public CalendarTool() {
+	/** 初始化当前系统的日期 */
+	Calendar calendar = Calendar.getInstance();
+	mCurrenYear = calendar.get(Calendar.YEAR);
+	mCurrenMonth = calendar.get(Calendar.MONTH) + 1;
+	mCurrenDay = calendar.get(Calendar.DAY_OF_MONTH);
+	this.mYear = mCurrenYear;
+	this.mMonth = mCurrenMonth;
 }
 
+/**
+ * 获取当前日历的年月 x为年，y为月
+ */
+public Point getNowCalendar() {
+	Point p = new Point(mYear, mMonth);
+	return p;
+}
+
+/**
+ * 判断第一天属不属于本月
+ */
+public boolean isStartBelong() {
+	return mStartBelong;
+}
+
+/**
+ * 判断最后一天属不属于本月
+ */
+public boolean isEndBelong() {
+	return mEndBelong;
+}
+
+/**
+ * 获取日历第一天的日期
+ */
+public int getStartDay() {
+	return mStartDay;
+}
+
+/**
+ * 获取日历最后一天的日期
+ */
+public int getEndDay() {
+	return mEndDay;
+}
+
+public ArrayList&lt;DateEntity&gt; initDateList() {
+	return initDateList(mYear, mMonth);
+}
+
+public void initRecordList(ArrayList&lt;T&gt; recordList) {
+	mRecordList = recordList;
+}
+
+/**
+ * 通过年月获取当前页面的日期集合
+ */
+private ArrayList&lt;DateEntity&gt; initDateList(int year, int month) {
+
+	Log.i(TAG, "initDateList: year = " + year + " month = " + month);
+
+	mDataList.clear();
+
+	/** 修改部分 */
+	int endDate = 0;// 得到上一个月的天数，作为上一个月在本日历的结束日期
+	if ((year - 1) == this.mYear || month == 1) {// 说明向前翻了一年，那么上个月的天数就应该是上一年的12月的天数，或者到翻到一月份的时候，那么上一个月的天数也是上一年的12月份的天数
+		endDate = this.getDays(year - 1, 12);
+	} else {// 得到上一个月的天数，作为上一个月在本日历的结束日期
+		endDate = this.getDays(year, month - 1);
+	}
+	/** 修改部分结束 */
+
+	this.mYear = year;// 当前日历上显示的年
+	this.mMonth = month;// 当前日历上显示的月
+
+	int days = this.getDays(year, month);// 得到本月的总共天数
+	int dayOfWeek = this.getWeekDay(year, month);//得到当前年月的第一天为星期几
+	int selfDaysEndWeek = 0;// 本月的最后一天是星期几
+
+	mStartBelong = true;
+
+	/** 先添加前面不属于本月的 */
+	if (dayOfWeek != 0) {
+		int startDate = endDate - dayOfWeek + 1;// 当前月的上一个月在本日历的开始日期
+		for (int i = startDate, j = 0; i &lt;= endDate; i++, j++) {
+
+			mDateEntity = new DateEntity(year, month - 1, i);
+			mDateEntity.date = mDateEntity.year * 10000 + mDateEntity.month * 100 + i;
+			if (startDate == i) {
+				mStartBelong = false;
+				mStartDay = mDateEntity.date;
+			}
+
+			mDateEntity.isSelfMonthDate = false;
+			mDateEntity.weekDay = weekDayRow[j];
+			mDateEntity.hasRecord = hasRecord(mDateEntity.date);
+			mDataList.add(mDateEntity);
+		}
+	}
+
+	/** 添加本月的 */
+	for (int i = 1, j = dayOfWeek; i &lt;= days; i++, j++) {
+
+		mDateEntity = new DateEntity(year, month, i);
+		mDateEntity.date = mDateEntity.year * 10000 + mDateEntity.month * 100 + i;
+		if (mStartBelong &amp;&amp; i == 1) {
+			mStartDay = mDateEntity.date;
+		}
+		if (i == days) {
+			mEndDay = mDateEntity.date;
+		}
+		mDateEntity.isSelfMonthDate = true;
+		if (j &gt;= 7) {
+			j = 0;
+		}
+		selfDaysEndWeek = j;
+		mDateEntity.weekDay = weekDayRow[j];
+		if (year == mCurrenYear &amp;&amp; month == mCurrenMonth &amp;&amp; i == mCurrenDay) {
+			mDateEntity.isNowDate = true;
+		}
+		mDateEntity.hasRecord = hasRecord(mDateEntity.date);
+		mDataList.add(mDateEntity);
+	}
+
+	mEndBelong = true;
+
+	/*** 添加后面下一个月的 */
+	for (int i = 1, j = selfDaysEndWeek + 1; i &lt; 7; i++, j++) {
+
+		if (j &gt;= 7) {
+			break;
+		}
+		mEndBelong = false;
+
+		mDateEntity = new DateEntity(year, month + 1, i);
+
+		if (mDateEntity.month &gt; 12) {
+			mDateEntity.year = year + 1;
+			mDateEntity.month = 1;
+		}
+		mDateEntity.date = mDateEntity.year * 10000 + mDateEntity.month * 100 + i;
+		mDateEntity.isSelfMonthDate = false;
+		mDateEntity.weekDay = weekDayRow[j];
+		mDateEntity.hasRecord = hasRecord(mDateEntity.date);
+		mDataList.add(mDateEntity);
+
+		mEndDay = mDateEntity.year * 10000 + mDateEntity.month * 100 + i;
+	}
+	return mDataList;
+}
+
+/**
+ * 通过年月，获取这个月一共有多少天
+ */
+private int getDays(int year, int month) {
+	int days = 0;
+
+	if ((year % 4 == 0 &amp;&amp; (year % 100 != 0)) || (year % 400 == 0)) {
+		if (month &gt; 0 &amp;&amp; month &lt;= 12) {
+			days = leapYearMonthDay[month - 1];
+		}
+	} else {
+		if (month &gt; 0 &amp;&amp; month &lt;= 12) {
+			days = commonYearMonthDay[month - 1];
+		}
+	}
+	return days;
+}
+
+private boolean hasRecord(int date) {
+	if (mRecordList != null) {
+		for (T baseDateEntity : mRecordList) {
+			if (baseDateEntity.year * 10000 + baseDateEntity.month * 100 + baseDateEntity.day == date) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/**
+ * 通过年，月获取当前月的第一天为星期几 ，返回0是星期天，1是星期一，依次类推
+ */
+private int getWeekDay(int year, int month) {
+	int dayOfWeek;
+	int goneYearDays = 0;
+	int thisYearDays = 0;
+	boolean isLeapYear = false;//闰年
+	int commonYearMonthDay[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	int leapYearMonthDay[] = {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	for (int i = 1900; i &lt; year; i++) {// 从1900年开始算起，1900年1月1日为星期一
+		if ((i % 4 == 0 &amp;&amp; (i % 100 != 0)) || (i % 400 == 0)) {
+			goneYearDays = goneYearDays + 366;
+		} else {
+			goneYearDays = goneYearDays + 365;
+		}
+	}
+	if ((year % 4 == 0 &amp;&amp; (year % 100 != 0)) || (year % 400 == 0)) {
+		isLeapYear = true;
+		for (int i = 0; i &lt; month - 1; i++) {
+			thisYearDays = thisYearDays + leapYearMonthDay[i];
+		}
+	} else {
+		isLeapYear = false;
+		for (int i = 0; i &lt; month - 1; i++) {
+			thisYearDays = thisYearDays + commonYearMonthDay[i];
+		}
+	}
+	dayOfWeek = (goneYearDays + thisYearDays + 1) % 7;
+
+	Log.d(this.getClass().getName(), "从1990到现在有" + (goneYearDays + thisYearDays + 1) + "天");
+	Log.d(this.getClass().getName(), year + "年" + month + "月" + 1 + "日是星期" + dayOfWeek);
+	return dayOfWeek;
+}
+
+public void flushDate(float distance_x) {
+	if (distance_x &lt; 0) {// Fling right
+		if (mMonth + 1 &gt; 12) {
+			mDataList = initDateList(mYear + 1, 1);
+		} else {
+			mDataList = initDateList(mYear, mMonth + 1);
+		}
+	} else {// Fling left
+		if (mMonth - 1 &lt;= 0) {
+			mDataList = initDateList(mYear - 1, 12);
+		} else {
+			mDataList = initDateList(mYear, mMonth - 1);
+		}
+	}
+} }
+
+
+
 ``` 
+
+
+initDateList方法，会根据当前传入的年月数据来计算当前日历该显示的数据。
 </pre></td></tr></tbody></table></code></pre></div></div>
 
-<p>【3-4】签名方法   这里我把获取签名封装成了一个方法，更方便大家的使用</p>
+<p>因为我的需求是点击按钮完成签到即可，不用点击日历中的日期（item），只需要把 当前的日期传入即可</p>
 
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
@@ -442,108 +810,19 @@ private String hmac_sha1(String key, String datas) {
 6
 7
 8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-</pre></td><td class="rouge-code"><pre>	``` 
-private String GoToSign(List&lt;String&gt; sortedKeys, Map&lt;String, String&gt; parameterMap) {
-    StringBuilder stringToSign = new StringBuilder();
-    stringToSign.append(HTTP_METHOD).append(SEPARATOR);
-    stringToSign.append(percentEncode("/")).append(SEPARATOR);
-    StringBuilder QueryString = new StringBuilder();
-    for (String key : sortedKeys) {
-        // 此处需要对key和value进行编码
-        String value = parameterMap.get(key);
-        QueryString.append(SEPARATOR).append(percentEncode(key)).append(EQUAL).append(percentEncode(value));
-		  //  append的拼接样式 请看 【4-1】
-    }
-    StringBuilder append = stringToSign.append(percentEncode(QueryString.toString().substring(1)));
-    String PuR8IfTyWIan = hmac_sha1(WJ_Home_AccessSecret + "&amp;", append.toString()).trim();
-	  //  PuR8IfTyWIan 样式 请看 【4-2】
-    return PuR8IfTyWIan;
-}
-
+</pre></td><td class="rouge-code"><pre>``` 
+Calendar calendar = Calendar.getInstance();
+list.add(new BaseDateEntity(calendar.get(Calendar.YEAR), (calendar.get(Calendar.MONTH) + 1),calendar.get(Calendar.DAY_OF_MONTH)));
+rcDate.initRecordList(list);
 
 ``` 
+
+initRecordList 已经封装adapter刷新，不用担心传值后没有刷新。
 </pre></td></tr></tbody></table></code></pre></div></div>
 
-<p>【4-1】append 的拼接样式</p>
+<p>这个Demo即使是新手直接可以使用，省去了大家阅读的时间，毕竟大家的时间宝贵。</p>
 
-<p><code class="highlighter-rouge">GET&amp;%2F&amp;AccessKeyId%3DLTAIPuR8IfTyWIan%26Action%3DGetVideoPlayAuth%26Format%3DJSON%26SignatureMethod%3DHMAC-SHA1%26SignatureNonce%3D578a50c1-280d-4a34-bffc-e0sda6b2df76%26SignatureVersion%3D1.0%26Timestamp%3D2017-08-11T08%253A56%253A39Z%26Version%3D2017-03-21%26VideoId%3D86d0a02dfccc46bab045d954e6b70036</code></p>
-
-<p>【4-2】PuR8IfTyWIan的样式</p>
-
-<p><code class="highlighter-rouge">9or7epLWdsgMIvtRlJZm57HpBGs=</code></p>
-
-<p><strong>最后我强调一点 就是拼接URL这一点（我在拼接的时候没有进行转码，也能请求成功！）</strong></p>
-
-<p>我的URL
-   <code class="highlighter-rouge">http://vod.cn-shanghai.aliyuncs.com?Signature=7K0h2pa/JS4KdC6XEKiYrw7a3EU=&amp;SignatureNonce=bb8d6d93-e56c-4e76-b7d8-f4be3490b7e6&amp;Format=JSON&amp;CateId=133999353&amp;SignatureMethod=HMAC-SHA1&amp;Timestamp=2017-08-13T13%3A15%3A22Z&amp;SignatureVersion=1.0&amp;Action=GetVideoList&amp;Version=2017-03-21&amp;PageNo=1&amp;PageSize=10&amp;AccessKeyId=LTAIPuR8IfTyWIan</code></p>
-
-<p>阿里云的URL
-   <code class="highlighter-rouge">http://vod.cn-shanghai.aliyuncs.com?Signature=UI%2FwKfuvTtphzCKHwPhP0ErtLnc%3D&amp;SignatureVersion=1.0&amp;Action=GetVideoPlayAuth&amp;Format=JSON&amp;VideoId=68a4d2629a339db3207963ac073a88cd&amp;SignatureNonce=578a50c1-280d-4a34-bffc-e06aa6b2df76&amp;Version=2017-03-21&amp;AccessKeyId=testId&amp;SignatureMethod=HMAC-SHA1&amp;Timestamp=2017-03-29T12%3A09%3A11Z</code></p>
-
-<p>有人就会说了为什么你不跟着阿里爸爸方法走呢？ 我也想跟着阿里爸爸走啊，条件不允许啊！
-经过hmac_sha1我的转码后的签名</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre> `UI%2QcKDaeGtplzCJHwPhP0ErtLnc%3DOA`
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>阿里云的转码后的签名</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre> `UI%2FwKfuvTtphzCKHwPhP0ErtLnc%3D`
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>为什么没有跟阿里爸爸的方法走，是因为我转码过后就多出个0A,如果按照阿里云的调用方式最后等待我的结果只有 <strong>SignatureDoesNotMatch</strong></p>
-
-<p>阿里API给的方法是这样的</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-</pre></td><td class="rouge-code"><pre>	``` 
- // 生成请求URL
-	StringBuilder requestURL;
-	requestURL = new StringBuilder("http://vod.cn-shanghai.aliyuncs.com?");
-	requestURL.append(URLEncoder.encode("Signature", ENCODE_TYPE)).append("=").append(signature);
-	for (Map.Entry&lt;String, String&gt; e : parameterMap.entrySet()) {
-	requestURL.append("&amp;").append(percentEncode(e.getKey())).append("=").append(percentEncode(e.getValue()));
-
-
-``` 
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>因为它把集合中的数据进行了转码，当生成了URL，你对这个url进行请求的时候<strong>InvalidTimeStamp.Format时间戳格式不对</strong></p>
-
-<p>【解决办法】</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
-</pre></td><td class="rouge-code"><pre> `requestURL.append("&amp;").append(e.getKey()).append("=").append(e.getValue());`
-</pre></td></tr></tbody></table></code></pre></div></div>
-
-<p>【网络请求】 我这里用的是nohttp  参数都放上就OK了</p>
-
-<p><img src="/img/in-post/xy_ali_q.png" alt="img" /></p>
-
-<p>希望这篇博客可以帮助到你</p>
+<p><a href="https://github.com/XiaYan24/SignCalendar">GitHub源码地址</a></p>
 
 
 
@@ -551,19 +830,12 @@ private String GoToSign(List&lt;String&gt; sortedKeys, Map&lt;String, String&gt;
                 <ul class="pager">
                     
                     <li class="previous">
-                        <a href="/2019/03/19/hello-2019/" data-toggle="tooltip" data-placement="top" title="Hello 2019">
+                        <a href="/2019/04/12/%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8C%E4%BA%91%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%ADAPI%E5%AE%9E%E7%8E%B0%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE-2019/" data-toggle="tooltip" data-placement="top" title="直接调用阿里云视频点播API实现视频播放">
                         Previous<br>
-                        <span>Hello 2019</span>
+                        <span>直接调用阿里云视频点播API实现视频播放</span>
                         </a>
                     </li>
                     
-                    
-                    <li class="next">
-                        <a href="/2019/10/11/sign/" data-toggle="tooltip" data-placement="top" title="Android 使用RecycleView自定义日历签到效果">
-                        Next<br>
-                        <span>Android 使用RecycleView自定义日历签到效果</span>
-                        </a>
-                    </li>
                     
                 </ul>
                 <hr style="visibility: hidden;">
@@ -654,8 +926,8 @@ private String GoToSign(List&lt;String&gt; sortedKeys, Map&lt;String, String&gt;
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES * * */
     var disqus_shortname = "hux";
-    var disqus_identifier = "/2019/04/12/直接调用阿里云视频点播API实现视频播放-2019 ";
-    var disqus_url = "http://localhost:4000/2019/04/12/%E7%9B%B4%E6%8E%A5%E8%B0%83%E7%94%A8%E9%98%BF%E9%87%8C%E4%BA%91%E8%A7%86%E9%A2%91%E7%82%B9%E6%92%ADAPI%E5%AE%9E%E7%8E%B0%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE-2019/";
+    var disqus_identifier = "/2019/10/11/sign";
+    var disqus_url = "http://localhost:4000/2019/10/11/sign/";
 
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

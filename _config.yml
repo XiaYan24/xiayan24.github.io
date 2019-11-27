@@ -102,11 +102,12 @@ page-mathjax: false
 
 # Friends
 friends: [
-    {
-    #     title: "Su",
-    #     href: "http://su.gallery/"
-    # },{
-        title: "乱序",
-        href: "http://mida.re/"
+   {
+        title: "无_上_",
+        href: "https://www.jianshu.com/u/94e00407fb5a"
+    },{
+        title: "家荫",
+        href: "https://me.csdn.net/yin_jia_521"
     }
+   
 ]
