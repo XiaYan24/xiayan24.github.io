@@ -1,0 +1,124 @@
+---
+layout:     post
+title:      "Android 实现抽屉效果"
+subtitle:   ""
+date:       2019-05-21 10:10:00
+author:     "XiaYan"
+header-img: "img/in-post/icon_ct_bg.jpg"
+catalog: true
+tags:
+    - 自定义UI
+    - Android
+---
+
+> “每天进步一点点！ ”
+
+
+## 前言
+
+最近网上认识一个小徒弟，因为他工作只有1年多，自己不能实现这个效果，再加上他是新民老乡所以我帮他实现了这个效果。
+
+
+## 效果图
+
+![img](/img/in-post/icon_ct.gif)
+
+
+## 抽屉效果的实现
+
+(1) 要测量完整展示的高度也就是收缩/拉伸布局的高度 这layout 是拉伸/收缩的布局
+
+	``` 
+	private int getLongHeight() {
+        layout.measure(0, 0);
+        return layout.getMeasuredHeight();
+    }
+	``` 
+	
+(2) 我还要知道不展示的时候的高度(最小值) 在这里是为0
+	
+	``` 
+	 layoutParams = layout.getLayoutParams();
+        layoutParams.height = 0;
+        layout.setLayoutParams(layoutParams);
+		
+	``` 
+	
+(3) 开始设置动画 首先需要一个布尔类型的值来判断是拉伸还是收缩
+
+	``` 
+	 private boolean isOpen = false;
+		
+	``` 
+	
+在点击事件中我们设置一个方法
+
+	``` 
+	 private void expend() {
+        ValueAnimator valueAnimator = null;
+        if (!isOpen){
+            //点击前是关闭状态,点击后就扩展拉开
+            isOpen = true;
+            valueAnimator = ValueAnimator.ofInt(0, getLongHeight());
+        }else{
+            //点击前是开启状态,点击后就缩回去
+            isOpen = false;
+            valueAnimator = ValueAnimator.ofInt(getLongHeight(), 0);
+        }
+        if (valueAnimator != null) {
+            valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    int height = (Integer) valueAnimator.getAnimatedValue();
+                    layoutParams.height = height;
+                    layout.setLayoutParams(layoutParams);
+                }
+            });
+            //这个是监听动画运行状态的
+            valueAnimator.addListener(new Animator.AnimatorListener() {
+                @Override
+                public void onAnimationStart(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (isOpen){
+                        //扩展开箭头向上
+                        img_k1.setImageResource(R.mipmap.icon_c);
+                    }else{
+                        //收缩时候向下
+                        img_k1.setImageResource(R.mipmap.icon_k);
+                    }
+                }
+
+                @Override
+                public void onAnimationCancel(Animator animation) {
+
+                }
+
+                @Override
+                public void onAnimationRepeat(Animator animation) {
+
+                }
+            });
+        }
+        valueAnimator.setDuration(100);
+        valueAnimator.start();
+    }
+		
+	``` 
+
+
+## 注意
+
+一定要设置时长 还有开启动画,不然你的界面也是没有效果的
+
+
+	``` 
+	 valueAnimator.setDuration(100);
+     valueAnimator.start();
+		
+	``` 
+	
+[CSDN源码地址](https://download.csdn.net/download/macaopark/9840554)
